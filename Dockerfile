@@ -1,6 +1,7 @@
 FROM clojure:openjdk-11-tools-deps-1.11.1.1113-buster as builder
+WORKDIR /usr/src
 RUN git clone --depth 1 --branch v0.12.681 https://github.com/wardle/hermes
-WORKDIR /hermes
+WORKDIR /usr/src/hermes
 RUN clj -T:build uber :out '"hermes.jar"'
 
 FROM amazoncorretto:11-alpine-jdk as index
