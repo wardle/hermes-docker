@@ -8,12 +8,12 @@ WORKDIR /usr/src
 RUN echo "Checking out hermes ${hermes}"
 RUN git clone --depth 1 --branch "${hermes}" https://github.com/wardle/hermes
 WORKDIR /usr/src/hermes
-RUN clj -T:build uber :out '"hermes.jar"'
+RUN clojure -T:build uber :out '"hermes.jar"'
 
 FROM amazoncorretto:11-alpine-jdk as index
 ARG trud_api_key
 ARG release_date
-COPY --from=build /hermes.jar /hermes.jar
+COPY --from=build /usr/src/hermes/hermes.jar /hermes.jar
 RUN mkdir cache
 RUN echo "Downloading UK release ${release_date}"
 RUN echo ${trud_api_key} >api-key.txt
