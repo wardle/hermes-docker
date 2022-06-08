@@ -1,6 +1,6 @@
 ARG trud_api_key
 ARG hermes=v0.12.681
-ARG release_date=2022-5-18
+ARG release_date=2022-05-18
 
 FROM clojure:openjdk-11-tools-deps-1.11.1.1113-buster as build
 ARG hermes
