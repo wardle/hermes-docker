@@ -10,21 +10,26 @@ RUN git clone --depth 1 --branch "${hermes}" https://github.com/wardle/hermes
 WORKDIR /usr/src/hermes
 RUN clojure -T:build uber :out '"hermes.jar"'
 
-FROM amazoncorretto:11-alpine-jdk as index
+FROM amazoncorretto:11-alpine-jdk as download
 ARG trud_api_key
 ARG release_date
+WORKDIR /
 COPY --from=build /usr/src/hermes/hermes.jar /hermes.jar
-RUN mkdir cache
-RUN echo "Downloading UK release ${release_date}"
-RUN echo ${trud_api_key} >api-key.txt
-RUN java -jar hermes.jar --db snomed.db download uk.nhs/sct-clinical cache-dir /cache api-key api-key.txt release-date ${release_date}
-RUN java -jar hermes.jar --db snomed.db download uk.nhs/sct-drug-ext cache-dir /cache api-key api-key.txt release-date ${release_date}
-RUN java -jar hermes.jar --db snomed.db compact
-RUN java -jar hermes.jar --db snomed.db --locale en-GB index
+RUN mkdir /cache && \
+    echo "Downloading UK release ${release_date}" && \
+    echo ${trud_api_key} >api-key.txt && \
+    java -jar hermes.jar --db /snomed.db download uk.nhs/sct-clinical cache-dir /cache api-key api-key.txt release-date ${release_date} && \
+    java -jar hermes.jar --db /snomed.db download uk.nhs/sct-drug-ext cache-dir /cache api-key api-key.txt release-date ${release_date}
+
+FROM amazoncorretto:11-alpine-jdk as index
+COPY --from=build /usr/src/hermes/hermes.jar /hermes.jar
+COPY --from=download /snomed.db /snomed.db
+RUN java -jar /hermes.jar --db /snomed.db compact && \
+    java -jar /hermes.jar --db /snomed.db --locale en-GB index
 
 FROM amazoncorretto:11-alpine-jdk
 ENV port 8080
-COPY --from=builder /hermes.jar /hermes.jar
+COPY --from=build /usr/src/hermes/hermes.jar /hermes.jar
 COPY --from=index /snomed.db /snomed.db
 EXPOSE ${port}    # Comment this out if using docker-compose
-CMD ["java", "-XX:+UseContainerSupport","-XX:MaxRAMPercentage=85","-XX:+UnlockExperimentalVMOptions","-XX:+UseZGC","-jar","/hermes.jar", "-a", "0.0.0.0", "-d", "snomed.db", "-p", "${port}", "--allowed-origins", "*", "serve"]
+CMD java -XX:+UseContainerSupport -XX:MaxRAMPercentage=85 -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -jar /hermes.jar -a 0.0.0.0 --db snomed.db -p ${port} --allowed-origins "*" serve
