@@ -15,14 +15,6 @@ Unfortunately I cannot re-distribute pre-built databases due to SNOMED licensing
 it easy to build your own. You can do this using the `hermes` command-line tools, or run the example
 Docker build processes below. I prefer to use the command-line tools.
 
-When I use docker on an Apple Silicon MacBook Pro (M1 Pro - arm64), I always have to build 
-by turning off 'buildkit':
-```shell
-DOCKER_BUILDKIT=0 docker build ...
-```
-
-
-
 ### Examples
 
 Here are a number of examples 
@@ -91,7 +83,7 @@ Assuming you have done these steps, with the `hermes` github repository cloned t
 simply run:
 
 ```shell
-docker build ~/Dev/hermes --file from-local.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg hermes_jar=target/hermes-0.12.681.jar --build-arg snomed_db=snomed.db
+docker buildx build --platform linux/amd64 ~/Dev/hermes --file from-local.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg hermes_jar=target/hermes-0.12.681.jar --build-arg snomed_db=snomed.db
 ```
 
 This Dockerfile needs the following parameters:
