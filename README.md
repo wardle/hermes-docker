@@ -15,6 +15,13 @@ Unfortunately I cannot re-distribute pre-built databases due to SNOMED licensing
 it easy to build your own. You can do this using the `hermes` command-line tools, or run the example
 Docker build processes below. I prefer to use the command-line tools.
 
+When I use docker on an Apple Silicon MacBook Pro (M1 Pro - arm64), I always have to build 
+by turning off 'buildkit':
+```shell
+DOCKER_BUILDKIT=0 docker build ...
+```
+
+
 
 ### Examples
 
@@ -36,7 +43,7 @@ However, it is convenient if you simply want to see how it works!
 You can build a container by simply passing in your NHS Digital 'TRUD' api-key.
 
 ```shell
-docker build . --file uk-combined.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg trud_api_key=xxxxxxxx
+docker build . --file uk-combined.from-local.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg trud_api_key=xxxxxxxx
 ```
 
 Where xxxxxxxx is your own TRUD API key.
@@ -60,12 +67,47 @@ of multiple containers running the application.
 
 #### from-local
 
-This is a very simple Dockerfile that presupposes that you have used the `hermes`
-command line utilities to build an uberjar and to create the necessary data files.
+This is a very simple Dockerfile that presupposes that you have already used the
+`hermes` command line utilities to build an uberjar and to create the necessary data files.
 
-Assuming you have done so, with the `hermes` github repository cloned to ~/Dev/hermes, 
+If you haven't already done so, install clojure and run the following commands.
+You may wish to use a different working directory than ~/Dev/ and you will need
+to enter your own NHS Digital TRUD API key where specified.
+
+```shell
+cd ~/Dev
+git clone https://github.com/wardle/hermes
+cd hermes
+clj -T:build uber :out target/hermes.jar
+echo MY_TRUD_API_KEY >> api-key.txt
+mkdir cache
+java -jar target/hermes.jar --db snomed.db download uk.nhs/sct-clinical api-key api-key.txt cache-dir cache
+java -jar target/hermes.jar --db snomed.db download uk.nhs/sct-drug-ext api-key api-key.txt cache-dir cache
+java -jar target/hermes.jar --db snomed.db compact
+java -jar target/hermes.jar --db snomed.db index
+```
+
+Assuming you have done these steps, with the `hermes` github repository cloned to ~/Dev/hermes, 
 simply run:
 
 ```shell
-sudo docker build ~/Dev/hermes --file from-local.Dockerfile --build-arg hermes_jar=target/hermes-0.12.681.jar --build-arg snomed_db=snomed.db
+docker build ~/Dev/hermes --file from-local.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg hermes_jar=target/hermes-0.12.681.jar --build-arg snomed_db=snomed.db
 ```
+
+This Dockerfile needs the following parameters:
+
+hermes_jar : path on your machine to the pre-built hermes uberjar. 
+snomed_db  : path on your machine to a pre-built snomed.db
+
+You can download a runnable hermes.jar from the [releases page](https://github.com/wardle/hermes/releases), instead
+of cloning the git repository and building the uberjar yourself. 
+
+Once you have built this container, you can run it:
+
+```shell
+docker run --platform linux/amd64 -p 8081:8080 eldrix/hermes-0.12.681--uk-2022-05
+```
+
+Here I explicitly define which platform I am using, but this won't be necessary if you 
+are running on a non-arm platform.
+
