@@ -31,5 +31,5 @@ FROM amazoncorretto:11-alpine-jdk
 ENV port 8080
 COPY --from=build /usr/src/hermes/hermes.jar /hermes.jar
 COPY --from=index /snomed.db /snomed.db
-EXPOSE ${port}    # Comment this out if using docker-compose
+EXPOSE ${port}
 CMD java -XX:+UseContainerSupport -XX:MaxRAMPercentage=85 -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -jar /hermes.jar -a 0.0.0.0 --db snomed.db -p ${port} --allowed-origins "*" serve
