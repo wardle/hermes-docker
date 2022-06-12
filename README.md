@@ -17,8 +17,6 @@ Docker build processes below. I prefer to use the command-line tools.
 
 ### Examples
 
-Here are a number of examples 
-
 #### uk-combined
 
 This is an example for the UK in which we build a container containing both
@@ -35,7 +33,10 @@ However, it is convenient if you simply want to see how it works!
 You can build a container by simply passing in your NHS Digital 'TRUD' api-key.
 
 ```shell
-docker build . --file uk-combined.from-local.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg trud_api_key=xxxxxxxx
+cd ~/Dev
+git clone https://github.com/wardle/hermes-docker
+cd hermes-docker 
+docker buildx build --platform linux/amd64 . --file uk-combined.Dockerfile -t eldrix/hermes-0.12.681--uk-2022-05 --build-arg trud_api_key=xxxxx
 ```
 
 Where xxxxxxxx is your own TRUD API key.
@@ -66,6 +67,8 @@ If you haven't already done so, install clojure and run the following commands.
 You may wish to use a different working directory than ~/Dev/ and you will need
 to enter your own NHS Digital TRUD API key where specified.
 
+If you haven't created your own local data files, you can run these commands
+if you are in the UK and have an NHS Digital TRUD API key.
 ```shell
 cd ~/Dev
 git clone https://github.com/wardle/hermes
@@ -78,6 +81,9 @@ java -jar target/hermes.jar --db snomed.db download uk.nhs/sct-drug-ext api-key 
 java -jar target/hermes.jar --db snomed.db compact
 java -jar target/hermes.jar --db snomed.db index
 ```
+
+If you're not in the UK, manually download a distribution, and [follow the
+instructions to manually import the data files](https://github.com/wardle/hermes)/
 
 Assuming you have done these steps, with the `hermes` github repository cloned to ~/Dev/hermes, 
 simply run:
